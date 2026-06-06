@@ -210,9 +210,6 @@ Uses the browser's built-in **Web Speech API** — no external API key needed. T
 **Kokkirala Gnaneswara Anjani Prasad**
 B.Tech Computer Science & Engineering | AI/ML Enthusiast
 
-[![GitHub](https://img.shields.io/badge/GitHub-000?style=flat&logo=github)](https://github.com/your-username)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/your-profile)
-
 ---
 
 ## 📄 License
