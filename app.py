@@ -234,23 +234,41 @@ section[data-testid="stSidebar"] .del-btn > button:hover {
     margin-bottom: 4px !important;
 }
 
-/* ── Native chat input — hidden, replaced by custom bar ── */
+/* ── Native chat input ── */
 div[data-testid="stChatInput"] {
     background: #ffffff !important;
     border: 2px solid #1a1a1a !important;
     border-radius: 14px !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.10) !important;
+    outline: none !important;
 }
 div[data-testid="stChatInput"]:focus-within {
-    border-color: #000000 !important;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.10) !important;
+    border-color: #1a1a1a !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+    outline: none !important;
+}
+/* Kill Streamlit's inner focus ring / orange outline completely */
+div[data-testid="stChatInput"] > div,
+div[data-testid="stChatInput"] > div:focus-within,
+div[data-testid="stChatInput"] > div > div,
+div[data-testid="stChatInput"] > div > div:focus-within {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 div[data-testid="stChatInput"] textarea {
     background: transparent !important;
     border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     color: #0d0d0d !important;
     font-size: 0.97rem !important;
     caret-color: #0d0d0d !important;
+}
+div[data-testid="stChatInput"] textarea:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 div[data-testid="stChatInput"] textarea::placeholder { color: #aaa !important; }
 div[data-testid="stChatInput"] button {
@@ -474,13 +492,14 @@ import streamlit.components.v1 as components
 components.html("""
 <script>
 (function injectMic() {
-    function tryInject() {
-        // Find the chat input textarea in the parent Streamlit frame
-        const parent = window.parent.document;
-        const inputDiv = parent.querySelector('div[data-testid="stChatInput"]');
-        if (!inputDiv || parent.getElementById('gm-mic-btn')) return;
+    const parent = window.parent.document;
 
-        // Style the input container for flex layout
+    function attachMic(inputDiv) {
+        // Remove any stale mic button (left over from previous render)
+        const old = parent.getElementById('gm-mic-btn');
+        if (old) old.remove();
+
+        // Style the input container
         inputDiv.style.display = 'flex';
         inputDiv.style.alignItems = 'center';
         inputDiv.style.padding = '4px 8px';
@@ -491,41 +510,48 @@ components.html("""
         mic.id = 'gm-mic-btn';
         mic.innerHTML = '🎙️';
         mic.title = 'Voice input';
-        mic.style.cssText = `
-            flex-shrink: 0;
-            order: -1;
-            background: transparent;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 8px;
-            line-height: 1;
-            transition: background 0.15s;
-        `;
-        mic.onmouseenter = () => mic.style.background = '#f0f0f0';
+        mic.style.cssText = [
+            'flex-shrink:0',
+            'order:-1',
+            'background:transparent',
+            'border:none',
+            'font-size:1.2rem',
+            'cursor:pointer',
+            'padding:4px 6px',
+            'border-radius:8px',
+            'line-height:1',
+            'transition:background 0.15s',
+        ].join(';');
+        mic.onmouseenter = () => { if (!mic._listening) mic.style.background = '#f0f0f0'; };
         mic.onmouseleave = () => { if (!mic._listening) mic.style.background = 'transparent'; };
 
-        // Insert mic as first child (left side)
         inputDiv.insertBefore(mic, inputDiv.firstChild);
 
         // Speech recognition
         let recognition = null;
         let listening = false;
 
+        function resetMic() {
+            listening = false;
+            mic._listening = false;
+            mic.innerHTML = '🎙️';
+            mic.style.background = 'transparent';
+            recognition = null;
+        }
+
         mic.addEventListener('click', () => {
-            if (!('webkitSpeechRecognition' in window.parent || 'SpeechRecognition' in window.parent)) {
-                alert('Your browser does not support voice input. Try Chrome.');
-                return;
-            }
+            const SR = window.parent.SpeechRecognition || window.parent.webkitSpeechRecognition;
+            if (!SR) { alert('Voice input not supported. Please use Chrome.'); return; }
+
             if (listening) {
                 recognition && recognition.stop();
                 return;
             }
-            const SR = window.parent.SpeechRecognition || window.parent.webkitSpeechRecognition;
+
             recognition = new SR();
             recognition.lang = 'en-US';
             recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
 
             recognition.onstart = () => {
                 listening = true;
@@ -538,29 +564,45 @@ components.html("""
                 const text = e.results[0][0].transcript;
                 const ta = parent.querySelector('div[data-testid="stChatInput"] textarea');
                 if (ta) {
-                    const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
-                    setter.call(ta, text);
+                    const nativeSetter = Object.getOwnPropertyDescriptor(window.parent.HTMLTextAreaElement.prototype, 'value').set;
+                    nativeSetter.call(ta, text);
                     ta.dispatchEvent(new Event('input', { bubbles: true }));
                     ta.focus();
                 }
             };
 
-            recognition.onerror = recognition.onend = () => {
-                listening = false;
-                mic._listening = false;
-                mic.innerHTML = '🎙️';
-                mic.style.background = 'transparent';
-            };
+            recognition.onerror = () => resetMic();
+            recognition.onend   = () => resetMic();
 
-            recognition.start();
+            try { recognition.start(); } catch(e) { resetMic(); }
         });
     }
 
-    // Retry until Streamlit renders the chat input
-    const interval = setInterval(() => {
-        tryInject();
-        if (window.parent.document.getElementById('gm-mic-btn')) clearInterval(interval);
-    }, 300);
+    // Watch for the chat input to appear / re-appear after every Streamlit rerun.
+    // We use a MutationObserver on the body so we catch DOM rebuilds, plus
+    // an interval as a fallback for the initial load.
+    let lastInputDiv = null;
+
+    function checkAndInject() {
+        const inputDiv = parent.querySelector('div[data-testid="stChatInput"]');
+        if (!inputDiv) return;
+
+        const micAlreadyInside = inputDiv.querySelector('#gm-mic-btn');
+        if (micAlreadyInside && lastInputDiv === inputDiv) return; // already injected into this exact node
+
+        lastInputDiv = inputDiv;
+        attachMic(inputDiv);
+    }
+
+    // Interval for initial load
+    const iv = setInterval(() => {
+        checkAndInject();
+        if (parent.querySelector('#gm-mic-btn')) clearInterval(iv);
+    }, 200);
+
+    // MutationObserver catches every Streamlit rerun DOM update
+    const observer = new MutationObserver(() => checkAndInject());
+    observer.observe(parent.body, { childList: true, subtree: true });
 })();
 </script>
 """, height=0)
