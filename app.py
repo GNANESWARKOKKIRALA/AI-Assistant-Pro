@@ -30,14 +30,22 @@ init_users_db()
 st.set_page_config(
     page_title="AI Assistant Pro",
     page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="centered",
+    initial_sidebar_state="auto"
 )
 
 init_session_state()
 
+# Force correct viewport scaling on mobile browsers
+st.markdown(
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">',
+    unsafe_allow_html=True
+)
+
+# Tie session_id to logged-in user so chat history persists across reruns
 if "session_id" not in st.session_state:
-    st.session_state.session_id = new_session_id()
+    user_id = st.session_state.get("user_id")
+    st.session_state.session_id = f"user_{user_id}" if user_id else new_session_id()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -415,115 +423,166 @@ div[data-testid="stMarkdownContainer"] em {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   RESPONSIVE — Mobile (≤768px), Tablet (769–1024px), Desktop
+   RESPONSIVE — Mobile first, Tablet, Desktop
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Mobile ── */
-@media (max-width: 768px) {
-    /* Full width chat */
+/* Base — works on all screen sizes */
+.main .block-container {
+    padding: 16px 16px 100px !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+}
+
+/* ── Mobile (phones ≤640px) ── */
+@media (max-width: 640px) {
+    /* viewport meta — forces correct scaling */
+    html { font-size: 15px !important; }
+
     .main .block-container {
+        padding: 8px 10px 100px !important;
         max-width: 100% !important;
-        padding: 8px 8px 90px !important;
-        margin: 0 !important;
     }
 
-    /* Sidebar overlay on mobile */
+    /* Sidebar takes full width overlay on mobile */
     section[data-testid="stSidebar"] {
-        min-width: 75vw !important;
-        max-width: 85vw !important;
+        width: 82vw !important;
+        min-width: unset !important;
+        max-width: 320px !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        padding: 6px 0 !important;
+    }
+
+    /* Sidebar brand smaller */
+    .sb-brand { padding: 10px 12px 10px !important; }
+    .sb-brand .name { font-size: 0.88rem !important; }
+    .sb-brand .sub  { font-size: 0.6rem !important; }
+    .sb-brand .icon { font-size: 1.2rem !important; }
+
+    /* Profile card */
+    .profile-card {
+        padding: 8px 10px !important;
+        margin: 0 6px 8px !important;
+        gap: 8px !important;
+    }
+    .profile-avatar {
+        width: 30px !important; height: 30px !important;
+        font-size: 0.72rem !important;
+    }
+    .profile-info .pname  { font-size: 0.8rem !important; }
+    .profile-info .pemail { font-size: 0.62rem !important; }
+
+    /* Metrics */
+    .metric-row { gap: 6px !important; margin: 0 6px 8px !important; }
+    .metric-card { padding: 8px 4px !important; border-radius: 7px !important; }
+    .metric-card .num { font-size: 1.2rem !important; }
+    .metric-card .lbl { font-size: 0.55rem !important; }
+
+    /* Doc chips */
+    .doc-chip { padding: 6px 8px !important; margin: 2px 6px !important; }
+    .doc-chip .dname { max-width: 110px !important; font-size: 0.72rem !important; }
+    .doc-chip .dmeta { font-size: 0.62rem !important; }
+
+    /* Sidebar buttons — bigger tap targets */
+    section[data-testid="stSidebar"] .stButton > button {
+        height: 46px !important;
+        font-size: 0.87rem !important;
+        border-radius: 10px !important;
+        touch-action: manipulation !important;
     }
 
     /* Welcome card */
-    .welcome-card { padding: 24px 10px 16px !important; }
-    .welcome-card .wc-icon { font-size: 2.2rem !important; }
-    .welcome-card h2 { font-size: 1.1rem !important; }
-    .welcome-card p  { font-size: 0.82rem !important; }
-    .welcome-pills   { gap: 5px !important; margin-top: 14px !important; }
-    .welcome-pill    { font-size: 0.7rem !important; padding: 4px 9px !important; }
+    .welcome-card {
+        padding: 30px 12px 24px !important;
+        margin: 0 !important;
+    }
+    .welcome-card .wc-icon { font-size: 2.4rem !important; margin-bottom: 12px !important; }
+    .welcome-card h2 { font-size: 1.15rem !important; margin-bottom: 8px !important; }
+    .welcome-card p  { font-size: 0.84rem !important; line-height: 1.6 !important; }
+    .welcome-pills   { gap: 6px !important; margin-top: 16px !important; }
+    .welcome-pill    { font-size: 0.72rem !important; padding: 5px 10px !important; }
 
     /* Chat messages */
-    [data-testid="stChatMessage"] { padding: 6px 0 !important; }
+    [data-testid="stChatMessage"] {
+        padding: 6px 0 !important;
+        margin: 0 !important;
+    }
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
         padding: 10px 10px !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 6px !important;
+        border-radius: 10px !important;
     }
     [data-testid="stChatMessage"] p {
-        font-size: 0.9rem !important;
-        line-height: 1.6 !important;
+        font-size: 0.92rem !important;
+        line-height: 1.65 !important;
     }
 
-    /* Chat input — bigger tap target */
+    /* Avatars */
+    [data-testid="chatAvatarIcon-assistant"],
+    [data-testid="chatAvatarIcon-user"] {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.9rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Code blocks — scroll horizontally on mobile */
+    pre {
+        font-size: 0.78rem !important;
+        overflow-x: auto !important;
+        max-width: calc(100vw - 32px) !important;
+        padding: 10px 12px !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Chat input — full width, big tap area */
     div[data-testid="stChatInput"] {
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         margin: 0 !important;
     }
     div[data-testid="stChatInput"] textarea {
-        font-size: 0.95rem !important;
-        min-height: 46px !important;
-    }
-
-    /* Mic bigger on mobile */
-    #gm-mic-btn {
-        font-size: 1.35rem !important;
-        padding: 5px 8px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
-    }
-
-    /* Sidebar buttons bigger tap */
-    section[data-testid="stSidebar"] .stButton > button {
-        height: 46px !important;
-        font-size: 0.88rem !important;
-        border-radius: 10px !important;
-    }
-
-    /* Profile card compact */
-    .profile-card { padding: 8px 10px !important; margin: 0 4px 8px !important; }
-    .profile-info .pname  { font-size: 0.78rem !important; }
-    .profile-info .pemail { font-size: 0.62rem !important; }
-    .profile-avatar { width: 28px !important; height: 28px !important; font-size: 0.7rem !important; }
-
-    /* Metrics compact */
-    .metric-card { padding: 7px 4px !important; }
-    .metric-card .num { font-size: 1.1rem !important; }
-    .metric-card .lbl { font-size: 0.55rem !important; }
-    .metric-row { margin: 0 4px 8px !important; }
-
-    /* Doc chips full width */
-    .doc-chip .dname { max-width: 120px !important; font-size: 0.73rem !important; }
-
-    /* Code blocks horizontal scroll */
-    [data-testid="stChatMessage"] pre {
-        overflow-x: auto !important;
-        max-width: calc(100vw - 40px) !important;
-        font-size: 0.76rem !important;
-        padding: 10px !important;
-    }
-
-    /* Avatar icons smaller on mobile */
-    [data-testid="chatAvatarIcon-assistant"],
-    [data-testid="chatAvatarIcon-user"] {
-        width: 28px !important;
-        height: 28px !important;
         font-size: 1rem !important;
+        min-height: 48px !important;
+        touch-action: manipulation !important;
+    }
+    div[data-testid="stChatInput"] button {
+        min-width: 38px !important;
+        min-height: 38px !important;
+        touch-action: manipulation !important;
+    }
+
+    /* Mic button — bigger touch target */
+    #gm-mic-btn {
+        font-size: 1.3rem !important;
+        min-width: 38px !important;
+        min-height: 38px !important;
+        padding: 6px !important;
+        touch-action: manipulation !important;
+    }
+
+    /* Streamlit bottom toolbar hide on mobile */
+    [data-testid="stBottom"] > div:first-child {
+        padding: 8px 10px !important;
     }
 }
 
-/* ── Tablet ── */
-@media (min-width: 769px) and (max-width: 1024px) {
+/* ── Tablet (641px – 1024px) ── */
+@media (min-width: 641px) and (max-width: 1024px) {
     .main .block-container {
-        max-width: 100% !important;
-        padding: 16px 20px 80px !important;
+        max-width: 680px !important;
+        padding: 16px 20px 90px !important;
+        margin: 0 auto !important;
     }
-    .welcome-card h2 { font-size: 1.35rem !important; }
-    div[data-testid="stChatInput"] textarea { font-size: 0.95rem !important; }
+    .welcome-card h2 { font-size: 1.4rem !important; }
+    div[data-testid="stChatInput"] textarea { font-size: 0.96rem !important; }
 }
 
-/* ── Desktop — cap width for readability ── */
+/* ── Desktop (>1024px) ── */
 @media (min-width: 1025px) {
     .main .block-container {
-        max-width: 760px !important;
+        max-width: 720px !important;
         margin: 0 auto !important;
+        padding: 24px 24px 90px !important;
     }
 }
 
@@ -675,7 +734,7 @@ with st.sidebar:
 
     st.markdown(
         '<div style="font-size:0.63rem;color:#bbb;text-align:center;padding:2px 0 8px;">'
-        'GapMind AI · LLaMA 3.3 70B · Groq · ChromaDB'
+        'AI Assistant Pro · LLaMA 3.3 70B · Groq · ChromaDB'
         '</div>', unsafe_allow_html=True
     )
 
@@ -686,6 +745,11 @@ with st.sidebar:
 
 
 # ── Chat ─────────────────────────────────────────────────────────
+# Ensure session_id is always tied to user after login
+if st.session_state.get("user_id") and st.session_state.session_id.startswith("user_") is False:
+    st.session_state.session_id = f"user_{st.session_state.user_id}"
+    st.session_state.messages = []
+
 if not st.session_state.messages:
     st.session_state.messages = get_history(session_id)
 
@@ -833,7 +897,7 @@ components.html("""
 </script>
 """, height=0)
 
-prompt = st.chat_input("Message GapMind AI…")
+prompt = st.chat_input("Message AI Assistant Pro…")
 
 if prompt:
     with st.chat_message("user", avatar="🧑"):
