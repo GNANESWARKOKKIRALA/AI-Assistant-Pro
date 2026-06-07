@@ -675,7 +675,7 @@ with st.sidebar:
 
     st.markdown(
         '<div style="font-size:0.63rem;color:#bbb;text-align:center;padding:2px 0 8px;">'
-        'GapMind AI · LLaMA 3.3 70B · Groq · ChromaDB'
+        'AI Assistant Pro · LLaMA 3.3 70B · Groq · ChromaDB'
         '</div>', unsafe_allow_html=True
     )
 
@@ -833,7 +833,7 @@ components.html("""
 </script>
 """, height=0)
 
-prompt = st.chat_input("Message GapMind AI…")
+prompt = st.chat_input("Message AI Assistant Pro…")
 
 if prompt:
     with st.chat_message("user", avatar="🧑"):
