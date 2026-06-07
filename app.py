@@ -45,16 +45,43 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* ══════════════════════════════════════════════════════════════
+   FORCE LIGHT MODE — Chrome, Edge, Firefox, iOS, Android, OS dark mode
+   ══════════════════════════════════════════════════════════════ */
+:root {
+    color-scheme: light only !important;
+    --background-color: #ffffff !important;
+    --secondary-background-color: #f9f9f9 !important;
+    --text-color: #0d0d0d !important;
+    --primary-color: #0d0d0d !important;
+}
+html, body {
+    background-color: #ffffff !important;
+    color: #0d0d0d !important;
+    color-scheme: light only !important;
+}
 *, html, body, [class*="css"] {
     font-family: 'Inter', sans-serif !important;
-    color-scheme: light !important;
+    color-scheme: light only !important;
 }
+/* Override Streamlit's injected CSS variables that cause dark bleed */
+[data-testid="stAppViewContainer"]::before,
+.stApp::before { content: none !important; }
 
-/* ── Main background ── */
-.stApp {
+/* ── Main background — every Streamlit container forced white ── */
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"],
+[data-testid="stVerticalBlock"],
+[data-testid="stBottom"],
+[data-testid="stHeader"],
+.main, .block-container {
     background: #ffffff !important;
     color: #0d0d0d !important;
 }
+/* Streamlit injects this dark overlay on non-Chrome browsers */
+[data-testid="stDecoration"] { display: none !important; }
 
 /* ── Sidebar ── */
 section[data-testid="stSidebar"] {
@@ -300,6 +327,185 @@ div[data-testid="stAlert"] { border-radius: 8px !important; font-size: 0.88rem !
 
 /* ── Spinner ── */
 .stSpinner > div { border-top-color: #0d0d0d !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   CODE BLOCKS — dark syntax, consistent on all browsers
+   ══════════════════════════════════════════════════════════════ */
+
+/* Block code (```python ... ```) — dark bg, light text */
+[data-testid="stChatMessage"] pre,
+.stCodeBlock, .stCodeBlock pre,
+div[data-testid="stMarkdownContainer"] pre {
+    background: #1a1a2e !important;
+    border-radius: 10px !important;
+    padding: 14px !important;
+    overflow-x: auto !important;
+}
+[data-testid="stChatMessage"] pre code,
+.stCodeBlock pre code,
+div[data-testid="stMarkdownContainer"] pre code {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+    font-size: 0.875rem !important;
+    padding: 0 !important;
+}
+
+/* Inline code `fact1` — light grey bg, dark text, NOT dark badge */
+[data-testid="stChatMessage"] code:not(pre code),
+div[data-testid="stMarkdownContainer"] code:not(pre code) {
+    background: #f0f0f0 !important;
+    color: #c7254e !important;
+    border-radius: 4px !important;
+    padding: 1px 5px !important;
+    font-size: 0.85em !important;
+    border: 1px solid #e0e0e0 !important;
+}
+
+/* ── All markdown text forced dark on white ── */
+div[data-testid="stMarkdownContainer"] p,
+div[data-testid="stMarkdownContainer"] li,
+div[data-testid="stMarkdownContainer"] span,
+div[data-testid="stMarkdownContainer"] h1,
+div[data-testid="stMarkdownContainer"] h2,
+div[data-testid="stMarkdownContainer"] h3,
+div[data-testid="stMarkdownContainer"] h4,
+div[data-testid="stMarkdownContainer"] strong,
+div[data-testid="stMarkdownContainer"] em {
+    color: #0d0d0d !important;
+}
+
+/* ── Kill ghost watermark heading in chat area ── */
+[data-testid="stChatMessageContent"] h1,
+[data-testid="stChatMessageContent"] h2,
+[data-testid="stChatMessageContent"] h3 {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #0d0d0d !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    -webkit-text-fill-color: #0d0d0d !important;
+}
+/* Streamlit sometimes renders heading as giant watermark via this class */
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    opacity: 1 !important;
+    color: #0d0d0d !important;
+    -webkit-text-fill-color: #0d0d0d !important;
+    font-size: 1.1rem !important;
+    background: transparent !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤768px), Tablet (769–1024px), Desktop
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+    /* Full width chat */
+    .main .block-container {
+        max-width: 100% !important;
+        padding: 8px 8px 90px !important;
+        margin: 0 !important;
+    }
+
+    /* Sidebar overlay on mobile */
+    section[data-testid="stSidebar"] {
+        min-width: 75vw !important;
+        max-width: 85vw !important;
+    }
+
+    /* Welcome card */
+    .welcome-card { padding: 24px 10px 16px !important; }
+    .welcome-card .wc-icon { font-size: 2.2rem !important; }
+    .welcome-card h2 { font-size: 1.1rem !important; }
+    .welcome-card p  { font-size: 0.82rem !important; }
+    .welcome-pills   { gap: 5px !important; margin-top: 14px !important; }
+    .welcome-pill    { font-size: 0.7rem !important; padding: 4px 9px !important; }
+
+    /* Chat messages */
+    [data-testid="stChatMessage"] { padding: 6px 0 !important; }
+    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+        padding: 10px 10px !important;
+        margin-bottom: 4px !important;
+    }
+    [data-testid="stChatMessage"] p {
+        font-size: 0.9rem !important;
+        line-height: 1.6 !important;
+    }
+
+    /* Chat input — bigger tap target */
+    div[data-testid="stChatInput"] {
+        border-radius: 12px !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stChatInput"] textarea {
+        font-size: 0.95rem !important;
+        min-height: 46px !important;
+    }
+
+    /* Mic bigger on mobile */
+    #gm-mic-btn {
+        font-size: 1.35rem !important;
+        padding: 5px 8px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+    }
+
+    /* Sidebar buttons bigger tap */
+    section[data-testid="stSidebar"] .stButton > button {
+        height: 46px !important;
+        font-size: 0.88rem !important;
+        border-radius: 10px !important;
+    }
+
+    /* Profile card compact */
+    .profile-card { padding: 8px 10px !important; margin: 0 4px 8px !important; }
+    .profile-info .pname  { font-size: 0.78rem !important; }
+    .profile-info .pemail { font-size: 0.62rem !important; }
+    .profile-avatar { width: 28px !important; height: 28px !important; font-size: 0.7rem !important; }
+
+    /* Metrics compact */
+    .metric-card { padding: 7px 4px !important; }
+    .metric-card .num { font-size: 1.1rem !important; }
+    .metric-card .lbl { font-size: 0.55rem !important; }
+    .metric-row { margin: 0 4px 8px !important; }
+
+    /* Doc chips full width */
+    .doc-chip .dname { max-width: 120px !important; font-size: 0.73rem !important; }
+
+    /* Code blocks horizontal scroll */
+    [data-testid="stChatMessage"] pre {
+        overflow-x: auto !important;
+        max-width: calc(100vw - 40px) !important;
+        font-size: 0.76rem !important;
+        padding: 10px !important;
+    }
+
+    /* Avatar icons smaller on mobile */
+    [data-testid="chatAvatarIcon-assistant"],
+    [data-testid="chatAvatarIcon-user"] {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 1rem !important;
+    }
+}
+
+/* ── Tablet ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .main .block-container {
+        max-width: 100% !important;
+        padding: 16px 20px 80px !important;
+    }
+    .welcome-card h2 { font-size: 1.35rem !important; }
+    div[data-testid="stChatInput"] textarea { font-size: 0.95rem !important; }
+}
+
+/* ── Desktop — cap width for readability ── */
+@media (min-width: 1025px) {
+    .main .block-container {
+        max-width: 760px !important;
+        margin: 0 auto !important;
+    }
+}
 
 /* ── Welcome card ── */
 .welcome-card { text-align: center; padding: 60px 24px 40px; }
