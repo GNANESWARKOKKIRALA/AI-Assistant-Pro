@@ -813,7 +813,7 @@ components.html("""
 </script>
 """, height=0)
 
-prompt = st.chat_input("Message GapMind AI…")
+prompt = st.chat_input("AI Assistant Pro…")
 
 if prompt:
     with st.chat_message("user", avatar="🧑"):
