@@ -329,37 +329,58 @@ div[data-testid="stAlert"] { border-radius: 8px !important; font-size: 0.88rem !
 .stSpinner > div { border-top-color: #0d0d0d !important; }
 
 /* ══════════════════════════════════════════════════════════════
-   CODE BLOCKS — dark syntax, consistent on all browsers
+   CODE BLOCKS — nuke Streamlit defaults, force clean white bg
    ══════════════════════════════════════════════════════════════ */
 
-/* Block code (```python ... ```) — dark bg, light text */
+/* Kill Streamlit's injected dark code theme at every level */
+.stCodeBlock { all: unset !important; display: block !important; }
+.stCodeBlock > div { all: unset !important; display: block !important; }
+
+/* Force ALL pre/code to white background with dark text */
+pre, code,
+.stCodeBlock pre,
+.stCodeBlock code,
 [data-testid="stChatMessage"] pre,
-.stCodeBlock, .stCodeBlock pre,
-div[data-testid="stMarkdownContainer"] pre {
-    background: #1a1a2e !important;
-    border-radius: 10px !important;
-    padding: 14px !important;
-    overflow-x: auto !important;
-}
-[data-testid="stChatMessage"] pre code,
-.stCodeBlock pre code,
-div[data-testid="stMarkdownContainer"] pre code {
-    background: transparent !important;
-    color: #e2e8f0 !important;
+[data-testid="stChatMessage"] code,
+div[data-testid="stMarkdownContainer"] pre,
+div[data-testid="stMarkdownContainer"] code,
+[class*="CodeMirror"],
+[class*="highlight"],
+[class*="prism"],
+[class*="hljs"] {
+    background: #f8f8f8 !important;
+    color: #24292e !important;
+    border-radius: 8px !important;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
     font-size: 0.875rem !important;
-    padding: 0 !important;
+    line-height: 1.65 !important;
 }
 
-/* Inline code `fact1` — light grey bg, dark text, NOT dark badge */
-[data-testid="stChatMessage"] code:not(pre code),
-div[data-testid="stMarkdownContainer"] code:not(pre code) {
+pre {
+    padding: 14px 16px !important;
+    overflow-x: auto !important;
+    border: 1px solid #e1e4e8 !important;
+    border-radius: 8px !important;
+}
+
+/* Inline code — subtle, readable on white */
+code:not(pre code) {
     background: #f0f0f0 !important;
-    color: #c7254e !important;
+    color: #d63384 !important;
     border-radius: 4px !important;
     padding: 1px 5px !important;
     font-size: 0.85em !important;
     border: 1px solid #e0e0e0 !important;
 }
+
+/* Syntax token colors for light theme */
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6a737d !important; }
+.token.keyword, .token.selector { color: #d73a49 !important; }
+.token.string, .token.attr-value { color: #032f62 !important; }
+.token.function, .token.class-name { color: #6f42c1 !important; }
+.token.number, .token.boolean { color: #005cc5 !important; }
+.token.operator, .token.punctuation { color: #24292e !important; }
+.token.builtin { color: #e36209 !important; }
 
 /* ── All markdown text forced dark on white ── */
 div[data-testid="stMarkdownContainer"] p,
@@ -385,7 +406,6 @@ div[data-testid="stMarkdownContainer"] em {
     background: transparent !important;
     -webkit-text-fill-color: #0d0d0d !important;
 }
-/* Streamlit sometimes renders heading as giant watermark via this class */
 .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
     opacity: 1 !important;
     color: #0d0d0d !important;
@@ -813,7 +833,7 @@ components.html("""
 </script>
 """, height=0)
 
-prompt = st.chat_input("AI Assistant Pro…")
+prompt = st.chat_input("Message GapMind AI…")
 
 if prompt:
     with st.chat_message("user", avatar="🧑"):
