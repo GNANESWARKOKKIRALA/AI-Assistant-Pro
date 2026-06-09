@@ -36,9 +36,9 @@ st.set_page_config(
 
 init_session_state()
 
-# Force correct viewport scaling on mobile browsers
+# Force correct viewport scaling on mobile browsers — must be first HTML injected
 st.markdown(
-    '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">',
     unsafe_allow_html=True
 )
 
@@ -52,6 +52,27 @@ if "messages" not in st.session_state:
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ══════════════════════════════════════════════════════════════
+   RESET — prevent any inherited overflow from breaking mobile
+   ══════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+    box-sizing: border-box !important;
+}
+html {
+    /* Prevent iOS/Android from auto-zooming font on orientation change */
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    /* Prevent horizontal scroll at the root */
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
+body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    /* iOS momentum scrolling in chat */
+    -webkit-overflow-scrolling: touch !important;
+}
 
 /* ══════════════════════════════════════════════════════════════
    FORCE LIGHT MODE — Chrome, Edge, Firefox, iOS, Android, OS dark mode
@@ -72,11 +93,10 @@ html, body {
     font-family: 'Inter', sans-serif !important;
     color-scheme: light only !important;
 }
-/* Override Streamlit's injected CSS variables that cause dark bleed */
 [data-testid="stAppViewContainer"]::before,
 .stApp::before { content: none !important; }
 
-/* ── Main background — every Streamlit container forced white ── */
+/* ── Main background ── */
 .stApp,
 [data-testid="stAppViewContainer"],
 [data-testid="stMain"],
@@ -88,19 +108,31 @@ html, body {
     background: #ffffff !important;
     color: #0d0d0d !important;
 }
-/* Streamlit injects this dark overlay on non-Chrome browsers */
 [data-testid="stDecoration"] { display: none !important; }
 
-/* ── Sidebar ── */
+/* Prevent Streamlit's main wrapper from causing overflow */
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR
+   ══════════════════════════════════════════════════════════════ */
 section[data-testid="stSidebar"] {
     background: #f9f9f9 !important;
     border-right: 2px solid #1a1a1a !important;
+    /* Ensure sidebar never causes horizontal overflow */
+    overflow-x: hidden !important;
 }
 section[data-testid="stSidebar"] > div {
     padding-top: 8px !important;
+    overflow-x: hidden !important;
 }
 
-/* ── Sidebar brand ── */
+/* Sidebar brand */
 .sb-brand {
     display: flex;
     align-items: center;
@@ -109,11 +141,11 @@ section[data-testid="stSidebar"] > div {
     border-bottom: 1.5px solid #1a1a1a;
     margin-bottom: 10px;
 }
-.sb-brand .icon { font-size: 1.4rem; }
+.sb-brand .icon { font-size: 1.4rem; flex-shrink: 0; }
 .sb-brand .name { font-size: 0.95rem; font-weight: 600; color: #0d0d0d; }
 .sb-brand .sub  { font-size: 0.65rem; color: #888; margin-top: 1px; }
 
-/* ── Profile card ── */
+/* Profile card */
 .profile-card {
     background: #f0f0f0;
     border: 1.5px solid #1a1a1a;
@@ -123,6 +155,8 @@ section[data-testid="stSidebar"] > div {
     display: flex;
     align-items: center;
     gap: 10px;
+    /* Prevent email from overflowing card */
+    overflow: hidden;
 }
 .profile-avatar {
     width: 32px; height: 32px;
@@ -132,10 +166,20 @@ section[data-testid="stSidebar"] > div {
     font-size: 0.78rem; font-weight: 700; color: white;
     flex-shrink: 0;
 }
-.profile-info .pname  { font-size: 0.83rem; font-weight: 600; color: #0d0d0d; }
-.profile-info .pemail { font-size: 0.7rem; color: #888; margin-top: 1px; }
+.profile-info {
+    overflow: hidden;
+    min-width: 0;
+}
+.profile-info .pname  {
+    font-size: 0.83rem; font-weight: 600; color: #0d0d0d;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.profile-info .pemail {
+    font-size: 0.7rem; color: #888; margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
-/* ── Metrics ── */
+/* Metrics */
 .metric-row { display: flex; gap: 8px; margin: 0 8px 10px; }
 .metric-card {
     flex: 1;
@@ -144,11 +188,12 @@ section[data-testid="stSidebar"] > div {
     border-radius: 8px;
     padding: 10px 8px;
     text-align: center;
+    min-width: 0;
 }
 .metric-card .num { font-size: 1.4rem; font-weight: 700; color: #0d0d0d; line-height: 1; }
 .metric-card .lbl { font-size: 0.63rem; color: #888; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* ── Sidebar section label ── */
+/* Sidebar section label */
 .sb-label {
     font-size: 0.68rem;
     font-weight: 600;
@@ -158,7 +203,7 @@ section[data-testid="stSidebar"] > div {
     padding: 8px 16px 4px;
 }
 
-/* ── Doc chip ── */
+/* Doc chip */
 .doc-chip {
     background: #f0f0f0;
     border: 1.5px solid #1a1a1a;
@@ -169,25 +214,32 @@ section[data-testid="stSidebar"] > div {
     justify-content: space-between;
     align-items: center;
     font-size: 0.78rem;
+    /* Prevent chip from overflowing sidebar */
+    overflow: hidden;
+    min-width: 0;
 }
 .doc-chip .dname {
     color: #0d0d0d; font-weight: 500;
     white-space: nowrap; overflow: hidden;
-    text-overflow: ellipsis; max-width: 150px;
+    text-overflow: ellipsis;
+    /* Flexible width — shrinks on small sidebars */
+    min-width: 0; flex: 1;
 }
 .doc-chip .dmeta { color: #888; font-size: 0.68rem; flex-shrink: 0; margin-left: 6px; }
 
-/* ── File uploader ── */
+/* File uploader */
 div[data-testid="stFileUploader"] {
     background: #f5f5f5 !important;
     border: 1.5px dashed #1a1a1a !important;
     border-radius: 10px !important;
     margin: 0 8px;
+    /* Prevent file uploader text from overflowing */
+    overflow: hidden !important;
 }
 div[data-testid="stFileUploader"] label { color: #888 !important; }
 div[data-testid="stFileUploader"] p     { color: #555 !important; }
 
-/* ── ALL sidebar buttons ── */
+/* ALL sidebar buttons */
 section[data-testid="stSidebar"] .stButton > button {
     background: #ffffff !important;
     color: #0d0d0d !important;
@@ -199,6 +251,8 @@ section[data-testid="stSidebar"] .stButton > button {
     transition: all 0.15s ease !important;
     width: 100% !important;
     box-shadow: none !important;
+    /* Mobile: prevent double-tap zoom */
+    touch-action: manipulation !important;
 }
 section[data-testid="stSidebar"] .stButton > button:hover {
     background: #f0f0f0 !important;
@@ -220,6 +274,7 @@ section[data-testid="stSidebar"] .stButton > button:hover {
     border-color: #dc2626 !important;
     height: 40px !important;
     font-weight: 600 !important;
+    touch-action: manipulation !important;
 }
 .btn-logout > button:hover { background: #ffe4e4 !important; }
 
@@ -233,6 +288,7 @@ section[data-testid="stSidebar"] .del-btn > button {
     width: 26px !important;
     padding: 0 !important;
     min-width: unset !important;
+    touch-action: manipulation !important;
 }
 section[data-testid="stSidebar"] .del-btn > button:hover {
     color: #dc2626 !important;
@@ -240,12 +296,17 @@ section[data-testid="stSidebar"] .del-btn > button:hover {
     border-radius: 4px !important;
 }
 
-/* ── Main chat area ── */
+/* ══════════════════════════════════════════════════════════════
+   MAIN CHAT AREA — Base styles (desktop default)
+   ══════════════════════════════════════════════════════════════ */
 .main .block-container {
     max-width: 760px !important;
+    width: 100% !important;
     margin: 0 auto !important;
-    padding: 24px 24px 8px !important;
+    padding: 24px 24px 90px !important;
     background: #ffffff !important;
+    /* Critical: prevent any child from causing horizontal scroll */
+    overflow-x: hidden !important;
 }
 
 /* ── Messages ── */
@@ -255,11 +316,16 @@ section[data-testid="stSidebar"] .del-btn > button:hover {
     border-radius: 0 !important;
     padding: 10px 0 !important;
     margin: 0 !important;
+    /* Prevent long unbroken words from overflowing */
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
 }
 [data-testid="stChatMessage"] p {
     color: #0d0d0d !important;
     font-size: 0.97rem !important;
     line-height: 1.75 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
 }
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
     background: #f7f7f7 !important;
@@ -276,13 +342,15 @@ div[data-testid="stChatInput"] {
     border-radius: 14px !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.10) !important;
     outline: none !important;
+    /* Ensure input never overflows viewport */
+    max-width: 100% !important;
+    width: 100% !important;
 }
 div[data-testid="stChatInput"]:focus-within {
     border-color: #1a1a1a !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
     outline: none !important;
 }
-/* Kill Streamlit's inner focus ring / orange outline completely */
 div[data-testid="stChatInput"] > div,
 div[data-testid="stChatInput"] > div:focus-within,
 div[data-testid="stChatInput"] > div > div,
@@ -299,6 +367,8 @@ div[data-testid="stChatInput"] textarea {
     color: #0d0d0d !important;
     font-size: 0.97rem !important;
     caret-color: #0d0d0d !important;
+    /* Prevent iOS from zooming on focus (font-size must be >= 16px on iOS) */
+    font-size: max(16px, 0.97rem) !important;
 }
 div[data-testid="stChatInput"] textarea:focus {
     border: none !important;
@@ -311,40 +381,38 @@ div[data-testid="stChatInput"] button {
     border-radius: 8px !important;
     color: white !important;
     border: none !important;
+    touch-action: manipulation !important;
 }
 div[data-testid="stChatInput"] button:hover { background: #333 !important; }
 
-/* ── Mic bar (custom component above chat input) ── */
+/* Mic bar iframe */
 iframe[title="render_mic"] {
     border: none !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-/* ── Divider ── */
+/* Divider */
 hr { border-color: #1a1a1a !important; margin: 8px 0 !important; }
 
-/* ── Scrollbar ── */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #888; }
 
-/* ── Alerts ── */
+/* Alerts */
 div[data-testid="stAlert"] { border-radius: 8px !important; font-size: 0.88rem !important; }
 
-/* ── Spinner ── */
+/* Spinner */
 .stSpinner > div { border-top-color: #0d0d0d !important; }
 
 /* ══════════════════════════════════════════════════════════════
-   CODE BLOCKS — nuke Streamlit defaults, force clean white bg
+   CODE BLOCKS — scrollable on all screen sizes
    ══════════════════════════════════════════════════════════════ */
-
-/* Kill Streamlit's injected dark code theme at every level */
 .stCodeBlock { all: unset !important; display: block !important; }
 .stCodeBlock > div { all: unset !important; display: block !important; }
 
-/* Force ALL pre/code to white background with dark text */
 pre, code,
 .stCodeBlock pre,
 .stCodeBlock code,
@@ -367,11 +435,20 @@ div[data-testid="stMarkdownContainer"] code,
 pre {
     padding: 14px 16px !important;
     overflow-x: auto !important;
+    /* Constrain to viewport — critical for mobile */
+    max-width: 100% !important;
+    width: 100% !important;
     border: 1px solid #e1e4e8 !important;
     border-radius: 8px !important;
+    /* iOS touch scroll inside code block */
+    -webkit-overflow-scrolling: touch !important;
+    /* Wrap is OFF — horizontal scroll instead, contained inside pre */
+    white-space: pre !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
 }
 
-/* Inline code — subtle, readable on white */
+/* Inline code */
 code:not(pre code) {
     background: #f0f0f0 !important;
     color: #d63384 !important;
@@ -379,9 +456,11 @@ code:not(pre code) {
     padding: 1px 5px !important;
     font-size: 0.85em !important;
     border: 1px solid #e0e0e0 !important;
+    /* Allow inline code to wrap so it doesn't blow out column width */
+    word-break: break-all !important;
 }
 
-/* Syntax token colors for light theme */
+/* Syntax tokens */
 .token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6a737d !important; }
 .token.keyword, .token.selector { color: #d73a49 !important; }
 .token.string, .token.attr-value { color: #032f62 !important; }
@@ -390,7 +469,7 @@ code:not(pre code) {
 .token.operator, .token.punctuation { color: #24292e !important; }
 .token.builtin { color: #e36209 !important; }
 
-/* ── All markdown text forced dark on white ── */
+/* Markdown text */
 div[data-testid="stMarkdownContainer"] p,
 div[data-testid="stMarkdownContainer"] li,
 div[data-testid="stMarkdownContainer"] span,
@@ -401,9 +480,12 @@ div[data-testid="stMarkdownContainer"] h4,
 div[data-testid="stMarkdownContainer"] strong,
 div[data-testid="stMarkdownContainer"] em {
     color: #0d0d0d !important;
+    /* Long URLs / strings in markdown must wrap */
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
 }
 
-/* ── Kill ghost watermark heading in chat area ── */
+/* Kill ghost watermark headings */
 [data-testid="stChatMessageContent"] h1,
 [data-testid="stChatMessageContent"] h2,
 [data-testid="stChatMessageContent"] h3 {
@@ -423,84 +505,160 @@ div[data-testid="stMarkdownContainer"] em {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   RESPONSIVE — Mobile first, Tablet, Desktop
+   WELCOME CARD — base (mobile-first)
    ══════════════════════════════════════════════════════════════ */
-
-/* Base — works on all screen sizes */
-.main .block-container {
-    padding: 16px 16px 100px !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
+.welcome-card {
+    text-align: center;
+    padding: 40px 16px 32px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.welcome-card .wc-icon { font-size: 2.8rem; margin-bottom: 14px; display: block; }
+.welcome-card h2 {
+    font-size: 1.35rem; font-weight: 700;
+    color: #0d0d0d; margin-bottom: 10px; letter-spacing: -0.4px;
+}
+.welcome-card p {
+    font-size: 0.88rem; color: #666; line-height: 1.65;
+    word-break: break-word;
+}
+.welcome-pills {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-top: 20px;
+}
+.welcome-pill {
+    background: #f5f5f5;
+    border: 1.5px solid #1a1a1a;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.76rem;
+    color: #555;
+    cursor: default;
+    /* Prevent pills breaking the layout on very small screens */
+    white-space: nowrap;
 }
 
-/* ── Mobile (phones ≤640px) ── */
-@media (max-width: 640px) {
-    /* viewport meta — forces correct scaling */
-    html { font-size: 15px !important; }
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Small phones (≤380px — e.g. SE, Galaxy A series) ── */
+@media (max-width: 380px) {
+    html { font-size: 14px !important; }
 
     .main .block-container {
-        padding: 8px 10px 100px !important;
-        max-width: 100% !important;
+        padding: 6px 8px 100px !important;
     }
 
-    /* Sidebar takes full width overlay on mobile */
+    /* Pills wrap and are allowed to truncate */
+    .welcome-pill { font-size: 0.7rem !important; padding: 4px 8px !important; }
+    .welcome-pills { gap: 5px !important; }
+
+    /* Metric numbers slightly smaller */
+    .metric-card .num { font-size: 1.1rem !important; }
+
+    /* Code blocks extra small text */
+    pre { font-size: 0.72rem !important; }
+
+    /* Avatars shrink */
+    [data-testid="chatAvatarIcon-assistant"],
+    [data-testid="chatAvatarIcon-user"] {
+        width: 22px !important; height: 22px !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+/* ── Mobile phones (≤640px) ── */
+@media (max-width: 640px) {
+    html { font-size: 15px !important; }
+
+    /* Full-bleed content area, generous bottom padding for fixed input */
+    .main .block-container {
+        padding: 8px 10px 110px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Sidebar: full-height overlay, never pushes content */
     section[data-testid="stSidebar"] {
         width: 82vw !important;
         min-width: unset !important;
-        max-width: 320px !important;
+        max-width: 300px !important;
+        /* Ensure sidebar overlays and doesn't resize main */
+        position: fixed !important;
+        height: 100vh !important;
+        z-index: 999 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
     }
     section[data-testid="stSidebar"] > div {
         padding: 6px 0 !important;
+        min-height: 100vh !important;
     }
 
     /* Sidebar brand smaller */
-    .sb-brand { padding: 10px 12px 10px !important; }
+    .sb-brand {
+        padding: 10px 12px 10px !important;
+        gap: 8px !important;
+    }
     .sb-brand .name { font-size: 0.88rem !important; }
     .sb-brand .sub  { font-size: 0.6rem !important; }
     .sb-brand .icon { font-size: 1.2rem !important; }
 
-    /* Profile card */
+    /* Profile card compact */
     .profile-card {
         padding: 8px 10px !important;
         margin: 0 6px 8px !important;
         gap: 8px !important;
     }
     .profile-avatar {
-        width: 30px !important; height: 30px !important;
-        font-size: 0.72rem !important;
+        width: 28px !important; height: 28px !important;
+        font-size: 0.7rem !important;
     }
-    .profile-info .pname  { font-size: 0.8rem !important; }
-    .profile-info .pemail { font-size: 0.62rem !important; }
+    .profile-info .pname  { font-size: 0.78rem !important; }
+    .profile-info .pemail { font-size: 0.6rem !important; }
 
-    /* Metrics */
-    .metric-row { gap: 6px !important; margin: 0 6px 8px !important; }
-    .metric-card { padding: 8px 4px !important; border-radius: 7px !important; }
+    /* Metrics compact */
+    .metric-row { gap: 5px !important; margin: 0 6px 8px !important; }
+    .metric-card { padding: 7px 4px !important; border-radius: 7px !important; }
     .metric-card .num { font-size: 1.2rem !important; }
-    .metric-card .lbl { font-size: 0.55rem !important; }
+    .metric-card .lbl { font-size: 0.54rem !important; }
 
     /* Doc chips */
-    .doc-chip { padding: 6px 8px !important; margin: 2px 6px !important; }
-    .doc-chip .dname { max-width: 110px !important; font-size: 0.72rem !important; }
+    .doc-chip {
+        padding: 6px 8px !important;
+        margin: 2px 6px !important;
+    }
+    .doc-chip .dname { font-size: 0.72rem !important; }
     .doc-chip .dmeta { font-size: 0.62rem !important; }
 
-    /* Sidebar buttons — bigger tap targets */
+    /* Sidebar buttons: large tap targets (min 44px per Apple HIG) */
     section[data-testid="stSidebar"] .stButton > button {
         height: 46px !important;
+        min-height: 44px !important;
         font-size: 0.87rem !important;
         border-radius: 10px !important;
         touch-action: manipulation !important;
     }
+    .btn-logout > button {
+        height: 46px !important;
+        min-height: 44px !important;
+    }
+
+    /* File uploader smaller padding */
+    div[data-testid="stFileUploader"] {
+        margin: 0 6px !important;
+    }
 
     /* Welcome card */
     .welcome-card {
-        padding: 30px 12px 24px !important;
-        margin: 0 !important;
+        padding: 28px 10px 22px !important;
     }
-    .welcome-card .wc-icon { font-size: 2.4rem !important; margin-bottom: 12px !important; }
+    .welcome-card .wc-icon { font-size: 2.2rem !important; margin-bottom: 12px !important; }
     .welcome-card h2 { font-size: 1.15rem !important; margin-bottom: 8px !important; }
-    .welcome-card p  { font-size: 0.84rem !important; line-height: 1.6 !important; }
-    .welcome-pills   { gap: 6px !important; margin-top: 16px !important; }
-    .welcome-pill    { font-size: 0.72rem !important; padding: 5px 10px !important; }
+    .welcome-card p  { font-size: 0.83rem !important; line-height: 1.6 !important; }
+    .welcome-pills   { gap: 6px !important; margin-top: 14px !important; }
+    .welcome-pill    { font-size: 0.71rem !important; padding: 5px 9px !important; }
 
     /* Chat messages */
     [data-testid="stChatMessage"] {
@@ -520,47 +678,53 @@ div[data-testid="stMarkdownContainer"] em {
     /* Avatars */
     [data-testid="chatAvatarIcon-assistant"],
     [data-testid="chatAvatarIcon-user"] {
-        width: 26px !important;
-        height: 26px !important;
-        font-size: 0.9rem !important;
+        width: 26px !important; height: 26px !important;
+        font-size: 0.88rem !important;
         flex-shrink: 0 !important;
     }
 
-    /* Code blocks — scroll horizontally on mobile */
+    /* Code blocks: contained horizontal scroll within the message */
     pre {
-        font-size: 0.78rem !important;
-        overflow-x: auto !important;
-        max-width: calc(100vw - 32px) !important;
-        padding: 10px 12px !important;
+        font-size: 0.77rem !important;
+        /* Constrained to viewport minus padding */
+        max-width: calc(100vw - 20px) !important;
+        width: calc(100vw - 20px) !important;
+        padding: 10px 10px !important;
         -webkit-overflow-scrolling: touch !important;
+        overflow-x: auto !important;
     }
 
-    /* Chat input — full width, big tap area */
+    /* Chat input — full width, no border-radius overflow */
     div[data-testid="stChatInput"] {
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         margin: 0 !important;
+        max-width: 100% !important;
     }
     div[data-testid="stChatInput"] textarea {
-        font-size: 1rem !important;
+        /* >= 16px prevents iOS auto-zoom on focus */
+        font-size: 16px !important;
         min-height: 48px !important;
         touch-action: manipulation !important;
     }
     div[data-testid="stChatInput"] button {
-        min-width: 38px !important;
-        min-height: 38px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
         touch-action: manipulation !important;
     }
 
-    /* Mic button — bigger touch target */
+    /* Mic button larger touch target */
     #gm-mic-btn {
         font-size: 1.3rem !important;
-        min-width: 38px !important;
-        min-height: 38px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
         padding: 6px !important;
         touch-action: manipulation !important;
     }
 
-    /* Streamlit bottom toolbar hide on mobile */
+    /* Bottom bar padding (safe area for notched phones) */
+    [data-testid="stBottom"] {
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    }
     [data-testid="stBottom"] > div:first-child {
         padding: 8px 10px !important;
     }
@@ -573,38 +737,50 @@ div[data-testid="stMarkdownContainer"] em {
         padding: 16px 20px 90px !important;
         margin: 0 auto !important;
     }
-    .welcome-card h2 { font-size: 1.4rem !important; }
-    div[data-testid="stChatInput"] textarea { font-size: 0.96rem !important; }
+
+    .welcome-card {
+        padding: 50px 24px 36px !important;
+    }
+    .welcome-card h2 { font-size: 1.45rem !important; }
+    .welcome-card .wc-icon { font-size: 3rem !important; }
+
+    /* Tablet: chat input readable without zoom */
+    div[data-testid="stChatInput"] textarea {
+        font-size: 16px !important;
+    }
+
+    /* Pre blocks on tablet */
+    pre {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
 }
 
-/* ── Desktop (>1024px) ── */
+/* ── Desktop / Large tablet landscape (>1024px) ── */
 @media (min-width: 1025px) {
     .main .block-container {
         max-width: 720px !important;
         margin: 0 auto !important;
         padding: 24px 24px 90px !important;
     }
+
+    .welcome-card {
+        padding: 60px 24px 40px !important;
+    }
+    .welcome-card h2 { font-size: 1.6rem !important; }
+    .welcome-card .wc-icon { font-size: 3.2rem !important; }
 }
 
-/* ── Welcome card ── */
-.welcome-card { text-align: center; padding: 60px 24px 40px; }
-.welcome-card .wc-icon { font-size: 3.2rem; margin-bottom: 16px; }
-.welcome-card h2 {
-    font-size: 1.6rem; font-weight: 700;
-    color: #0d0d0d; margin-bottom: 10px; letter-spacing: -0.5px;
-}
-.welcome-card p { font-size: 0.9rem; color: #666; line-height: 1.65; }
-.welcome-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
-.welcome-pill {
-    background: #f5f5f5;
-    border: 1.5px solid #1a1a1a;
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 0.78rem;
-    color: #555;
-    cursor: default;
+/* ── Wide desktop (>1440px) ── */
+@media (min-width: 1440px) {
+    .main .block-container {
+        max-width: 800px !important;
+    }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   UTILITY
+   ══════════════════════════════════════════════════════════════ */
 #MainMenu, footer { visibility: hidden !important; }
 </style>
 """, unsafe_allow_html=True)

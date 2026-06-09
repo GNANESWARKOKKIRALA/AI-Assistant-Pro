@@ -63,6 +63,14 @@ def _css():
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+    *, *::before, *::after { box-sizing: border-box !important; }
+    html {
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
+        overflow-x: hidden !important;
+    }
+    body { overflow-x: hidden !important; }
+
     /* Force override everything — no system theme leaking */
     html, body, [class*="css"], * {
         font-family: 'Inter', sans-serif !important;
@@ -78,10 +86,21 @@ def _css():
     .stApp > div, .main, section.main {
         background: #ffffff !important;
     }
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"] {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
 
+    /* Center the auth form — fluid width, caps at 400px */
     .main .block-container {
         max-width: 400px !important;
-        padding-top: 52px !important;
+        width: 100% !important;
+        padding-top: 40px !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        padding-bottom: 40px !important;
         margin: 0 auto !important;
         background: #ffffff !important;
     }
@@ -116,7 +135,7 @@ def _css():
         background: transparent !important;
     }
 
-    /* Inputs */
+    /* Inputs — font-size 16px prevents iOS zoom */
     div[data-testid="stForm"] input,
     div[data-testid="stForm"] input[type="text"],
     div[data-testid="stForm"] input[type="password"] {
@@ -124,10 +143,12 @@ def _css():
         border: 1.5px solid #d0d0d0 !important;
         color: #0d0d0d !important;
         border-radius: 8px !important;
-        font-size: 0.93rem !important;
-        height: 42px !important;
+        font-size: 16px !important;
+        height: 46px !important;
         padding: 0 12px !important;
         box-shadow: none !important;
+        touch-action: manipulation !important;
+        width: 100% !important;
     }
     div[data-testid="stForm"] input:focus {
         border-color: #0d0d0d !important;
@@ -151,9 +172,11 @@ def _css():
         background: transparent !important;
         border: none !important;
         color: #888 !important;
-        height: 38px !important;
-        width: 38px !important;
+        height: 44px !important;
+        width: 44px !important;
+        min-height: 44px !important;
         box-shadow: none !important;
+        touch-action: manipulation !important;
     }
 
     /* Submit button */
@@ -165,11 +188,14 @@ def _css():
         border-radius: 8px !important;
         font-size: 0.95rem !important;
         font-weight: 600 !important;
-        height: 44px !important;
+        height: 46px !important;
+        min-height: 44px !important;
         box-shadow: none !important;
         letter-spacing: normal !important;
         text-transform: none !important;
         font-family: 'Inter', sans-serif !important;
+        touch-action: manipulation !important;
+        width: 100% !important;
     }
     div[data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
         background: #333333 !important;
@@ -207,9 +233,12 @@ def _css():
         border-radius: 8px !important;
         font-size: 0.9rem !important;
         font-weight: 500 !important;
-        height: 44px !important;
+        height: 46px !important;
+        min-height: 44px !important;
         box-shadow: none !important;
         font-family: 'Inter', sans-serif !important;
+        touch-action: manipulation !important;
+        width: 100% !important;
     }
     .stButton > button:hover {
         background: #f5f5f5 !important;
@@ -218,5 +247,29 @@ def _css():
 
     /* Hide Streamlit branding */
     #MainMenu, footer, header { visibility: hidden !important; }
+
+    /* Small phones: reduce top padding */
+    @media (max-width: 480px) {
+        .main .block-container {
+            padding-top: 20px !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+        }
+        .auth-logo { font-size: 2.4rem !important; margin-bottom: 8px !important; }
+        .auth-title { font-size: 1.3rem !important; }
+        div[data-testid="stForm"] { padding: 16px !important; }
+    }
+
+    /* Very small phones */
+    @media (max-width: 360px) {
+        .main .block-container {
+            padding-top: 12px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+        }
+        .auth-title { font-size: 1.2rem !important; }
+        .auth-sub { font-size: 0.82rem !important; }
+        div[data-testid="stForm"] { padding: 12px !important; }
+    }
     </style>
     """, unsafe_allow_html=True)
